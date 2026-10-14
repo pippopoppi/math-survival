@@ -134,6 +134,9 @@ button:focus-visible { outline: 3px solid rgba(34, 197, 94, 0.5); outline-offset
 .good { color: var(--green-dark); }
 .bad { color: var(--red-dark); }
 
+.visits { margin: 4px 0 0; color: var(--muted); font-size: 13px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.visits strong { color: var(--ink); }
+
 /* ---------- Game screen ---------- */
 .screen-game { padding: 10px 12px 10px; gap: 0; }
 

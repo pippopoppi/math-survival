@@ -549,7 +549,33 @@
 
   api.game = game; // debug / test access
 
+  // ----- Visit counter (GoatCounter public counter endpoint; silently hidden if unavailable) -----
+  function loadVisits() {
+    const node = $('start-visits');
+    if (!node || !window.fetch) return;
+    const site = (document.querySelector('script[data-goatcounter]') || {}).dataset;
+    if (!site || !site.goatcounter) return;
+    const base = site.goatcounter.replace(/\/count$/, '');
+    const url = base + '/counter/' + location.pathname + '.json';
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => ctrl && ctrl.abort(), 5000);
+    fetch(url, { signal: ctrl ? ctrl.signal : undefined })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => {
+        const n = String(d.count || '').trim();
+        if (!n || n === '0') return;
+        node.innerHTML = '';
+        node.appendChild(document.createTextNode('Played '));
+        node.appendChild(Object.assign(document.createElement('strong'), { textContent: n }));
+        node.appendChild(document.createTextNode(' times'));
+        node.hidden = false;
+      })
+      .catch(() => { /* counter not public or offline: keep hidden */ })
+      .then(() => clearTimeout(timer));
+  }
+
   // ----- Boot -----
   renderStart();
   showScreen('start');
+  loadVisits();
 })();
