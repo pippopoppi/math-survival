@@ -577,5 +577,7 @@
   // ----- Boot -----
   renderStart();
   showScreen('start');
-  loadVisits();
+  // The analytics tag comes after game.js in the HTML, so wait for the parser to finish.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadVisits);
+  else loadVisits();
 })();
