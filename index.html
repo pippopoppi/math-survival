@@ -92,6 +92,16 @@
     <div id="over-score" class="over-score">0</div>
     <p id="over-record" class="over-record" hidden>★ NEW RECORD ★</p>
     <p class="best-line">Personal best: <strong id="over-best">0</strong></p>
+    <section id="world" class="world" hidden>
+      <p class="world-title">WORLD RANKING</p>
+      <div id="world-name" class="world-name" hidden>
+        <input id="nick" maxlength="12" placeholder="YOUR NAME" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" aria-label="Your name">
+        <button id="btn-nick" class="btn btn-secondary" type="button">SAVE</button>
+      </div>
+      <p id="world-me" class="world-me" hidden></p>
+      <ol id="world-list" class="world-list"></ol>
+      <button id="btn-nick-change" class="linkish" type="button" hidden>change name</button>
+    </section>
     <div class="over-buttons">
       <button id="btn-again" class="btn btn-primary btn-big" type="button">PLAY AGAIN</button>
       <button id="btn-share" class="btn btn-secondary btn-big" type="button">SHARE</button>

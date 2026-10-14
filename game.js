@@ -35,8 +35,13 @@
     { minScore: 81, add: { a: [300, 799],  b: [300, 799] },  sub: { r: [300, 799],  b: [200, 599] } }
   ];
 
+  // World ranking server (see github.com/pippopoppi/ranking). Empty string = device-only.
+  const RANKING_URL = 'https://ranking.pippopoppi.workers.dev/math-survival';
+  const RANKING_TOP = 10;
+
   const STORAGE_BEST = 'mathsurvival.best';
   const STORAGE_SOUND = 'mathsurvival.sound';
+  const STORAGE_NICK = 'mathsurvival.nick';
 
   // ---------------------------------------------------------------------------
   // Arithmetic generation
@@ -102,7 +107,9 @@
       input: '',
       deadline: 0,          // timestamp (ms) at which time runs out
       pausedRemaining: 0,   // seconds left while paused (tab hidden)
-      finalTime: 0
+      finalTime: 0,
+      elapsed: 0,           // ms actually played (pauses excluded), for the ranking sanity check
+      lastTick: 0
     };
 
     g.remaining = function (now) {
@@ -116,6 +123,7 @@
       g.state = 'playing';
       g.score = 0; g.streak = 0; g.input = '';
       g.deadline = now + CONFIG.initialTime * 1000;
+      g.elapsed = 0; g.lastTick = now;
       g.problem = generateProblem(0, null, rng);
       emit('start');
       emit('problem', g.problem);
@@ -136,6 +144,7 @@
     /** Advance the clock; call every frame. Returns remaining seconds. */
     g.tick = function (now) {
       if (g.state !== 'playing') return g.remaining(now);
+      g.elapsed += Math.max(0, now - g.lastTick); g.lastTick = now;
       const rem = (g.deadline - now) / 1000;
       if (rem <= 0) { gameOver(); return 0; }
       return rem;
@@ -216,6 +225,7 @@
     g.resume = function (now) {
       if (g.state !== 'paused') return;
       g.deadline = now + g.pausedRemaining * 1000;
+      g.lastTick = now;
       g.state = 'playing';
       emit('resume');
     };
@@ -294,6 +304,7 @@
     problem: $('problem'), answer: $('answer'), feedback: $('feedback'), bonus: $('bonus'),
     keys: $('screen-game').querySelector('.keys'), back: $('key-back'), skip: $('key-skip'), submit: $('btn-submit'),
     overScore: $('over-score'), overRecord: $('over-record'), overBest: $('over-best'),
+    world: $('world'), worldName: $('world-name'), nick: $('nick'), nickSave: $('btn-nick'), worldMe: $('world-me'), worldList: $('world-list'), nickChange: $('btn-nick-change'),
     toast: $('toast')
   };
 
@@ -435,6 +446,7 @@
     setTimeout(() => { el.again.disabled = false; el.share.disabled = false; }, CONFIG.overInputDelay);
     Sound.over();
     setTimeout(() => showScreen('over'), reduceMotion ? 0 : 350);
+    Ranking.onGameOver(score, Math.round(game.elapsed / 1000));
   }
 
   function loop() {
@@ -498,6 +510,7 @@
   // Keyboard (desktop). No key is bound to SKIP on purpose.
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target && e.target.tagName === 'INPUT') return; // nickname field handles its own keys
     if (game.state === 'playing') {
       if (/^[0-9]$/.test(e.key)) { e.preventDefault(); game.addDigit(e.key); press(el.keys.querySelector('[data-digit="' + e.key + '"]')); Sound.tap(); return; }
       if (e.key === 'Enter') { e.preventDefault(); game.submit(now()); return; }
@@ -522,6 +535,83 @@
   // Prevent pinch-zoom / double-tap zoom gestures on iOS inside the game.
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('dblclick', (e) => e.preventDefault());
+
+  // ----- World ranking -----
+  // One row per nickname on the server; a run is sent only when a nickname exists.
+  const Ranking = (function () {
+    let nick = '';
+    try { nick = localStorage.getItem(STORAGE_NICK) || ''; } catch (e) { /* storage blocked */ }
+    let lastRun = null; // last finished run; sent when a nickname exists (also re-sent after a rename)
+    let myName = '';
+
+    const enabled = () => !!RANKING_URL && typeof fetch === 'function';
+    const cleanName = (v) => String(v || '').replace(/[^\p{L}\p{N} _.\-!?*]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12).toUpperCase();
+
+    function renderList(top) {
+      el.worldList.innerHTML = '';
+      if (!top || !top.length) {
+        el.worldList.appendChild(Object.assign(document.createElement('li'), { className: 'empty', textContent: 'Be the first on the board!' }));
+        return;
+      }
+      top.forEach((r, i) => {
+        const li = document.createElement('li');
+        if (myName && r.name === myName) li.className = 'me';
+        li.appendChild(Object.assign(document.createElement('span'), { className: 'pos', textContent: (i + 1) + '.' }));
+        li.appendChild(Object.assign(document.createElement('span'), { className: 'nm', textContent: r.name }));
+        li.appendChild(Object.assign(document.createElement('span'), { className: 'sc', textContent: r.score }));
+        el.worldList.appendChild(li);
+      });
+    }
+    function showNameForm(show) {
+      el.worldName.hidden = !show;
+      el.nickChange.hidden = show || !nick;
+      if (show) el.nick.value = nick;
+    }
+    async function fetchTop() {
+      try {
+        const r = await fetch(RANKING_URL + '?top=' + RANKING_TOP, { cache: 'no-store' });
+        if (r.ok) renderList((await r.json()).top || []);
+      } catch (e) { /* offline: leave the list as is */ }
+    }
+    async function send(run) {
+      if (!run || !nick) return;
+      myName = cleanName(nick);
+      el.worldMe.hidden = false; el.worldMe.textContent = 'Sending…';
+      try {
+        const r = await fetch(RANKING_URL, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: nick, score: run.score, time: run.time }) });
+        if (r.status === 400) { el.worldMe.textContent = 'Score not accepted'; fetchTop(); return; }
+        if (!r.ok) throw new Error(String(r.status));
+        const j = await r.json();
+        el.worldMe.textContent = j.rank ? (myName + ': #' + j.rank + ' in the world' + (j.improved ? '' : ' (best ' + j.best + ')')) : myName + ': not ranked yet';
+        renderList(j.top || []);
+      } catch (e) {
+        el.worldMe.textContent = 'Ranking offline, try again later';
+      }
+    }
+    el.nickSave.addEventListener('click', () => {
+      const v = cleanName(el.nick.value);
+      if (!v) { el.nick.focus(); return; }
+      nick = v;
+      try { localStorage.setItem(STORAGE_NICK, nick); } catch (e) { /* ignore */ }
+      showNameForm(false);
+      el.nick.blur();
+      send(lastRun);
+    });
+    el.nick.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.nickSave.click(); } });
+    el.nickChange.addEventListener('click', () => { showNameForm(true); el.nick.focus(); });
+
+    return {
+      onGameOver(score, time) {
+        if (!enabled()) { el.world.hidden = true; return; }
+        el.world.hidden = false;
+        el.worldMe.hidden = true;
+        lastRun = score > 0 ? { score, time } : null;
+        myName = cleanName(nick);
+        showNameForm(!nick);
+        if (nick && lastRun) send(lastRun); else fetchTop();
+      }
+    };
+  })();
 
   // ----- Share -----
   function gameUrl() { return location.origin + location.pathname; }

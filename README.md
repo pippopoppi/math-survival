@@ -37,6 +37,15 @@ Suoni sintetizzati con Web Audio (nessun file audio), sbloccati al primo tocco a
 iOS Safari. Rispetta `prefers-reduced-motion`. Se cambi scheda o metti il browser in
 background il cronometro si ferma e riparte da dove era.
 
+## Classifica mondiale
+
+A fine partita compare la classifica mondiale (top 10). La prima volta scegli un soprannome
+(max 12 caratteri, salvato sul dispositivo): da lì in poi ogni partita viene inviata in
+automatico e vedi la tua posizione. Il server tiene una riga per soprannome e la sostituisce
+solo con un punteggio migliore, quindi riusando lo stesso nome conservi il record. È il
+Worker condiviso di https://github.com/pippopoppi/ranking (`RANKING_URL` in `game.js`;
+stringa vuota = solo classifica locale). Se il server non risponde, il gioco funziona lo stesso.
+
 ## Condividi
 
 A fine partita il pulsante SHARE usa la Web Share API (iOS/Android); dove non è disponibile
