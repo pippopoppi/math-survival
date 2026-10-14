@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Math Survival — Solve. Survive. Beat your best.</title>
+<meta name="description" content="Fast mental arithmetic survival game. 30 seconds on the clock: every right answer buys time, every skip costs it. One game, one score, one more try.">
+<meta name="theme-color" content="#f4f5f7">
+<meta property="og:title" content="Math Survival">
+<meta property="og:description" content="Solve. Survive. Beat your best. A free 30-second mental arithmetic game for your phone.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pippopoppi.github.io/math-survival/">
+<meta property="og:image" content="https://pippopoppi.github.io/math-survival/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://pippopoppi.github.io/math-survival/og.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app" class="app">
+
+  <!-- START SCREEN -->
+  <section id="screen-start" class="screen screen-start">
+    <h1 class="title">MATH<br>SURVIVAL</h1>
+    <p class="tagline">Solve. Survive. Beat your best.</p>
+    <p id="start-best" class="best-line" hidden>Personal best: <strong id="start-best-value">0</strong></p>
+    <button id="btn-play" class="btn btn-primary btn-big" type="button">PLAY</button>
+    <ul class="rules">
+      <li><span class="rule-k">Correct</span><span class="rule-v good">+2s</span></li>
+      <li><span class="rule-k">5 in a row</span><span class="rule-v good">+10s</span></li>
+      <li><span class="rule-k">Skip</span><span class="rule-v bad">−5s</span></li>
+    </ul>
+    <button id="btn-sound-start" class="btn-sound" type="button" aria-label="Toggle sound" aria-pressed="true">🔊</button>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="screen-game" class="screen screen-game" hidden>
+    <header class="hud">
+      <div class="hud-row">
+        <div class="hud-score">
+          <span class="hud-label">SCORE</span>
+          <span id="hud-score" class="hud-value">0</span>
+        </div>
+        <div class="hud-timer-wrap">
+          <span id="hud-timer" class="hud-timer">30.0</span>
+          <span id="hud-float" class="hud-float" aria-live="polite"></span>
+        </div>
+        <div class="hud-side">
+          <button id="btn-sound-game" class="btn-sound btn-sound-game" type="button" aria-label="Toggle sound" aria-pressed="true">🔊</button>
+          <div class="hud-best">
+            <span class="hud-label">BEST</span>
+            <span id="hud-best" class="hud-value">0</span>
+          </div>
+        </div>
+      </div>
+      <div id="streak" class="streak" aria-label="Streak progress">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </header>
+
+    <main class="arena">
+      <div id="problem" class="problem">8 + 7</div>
+      <div id="answer" class="answer"><span class="caret"></span></div>
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+      <div id="bonus" class="bonus">+10s BONUS!</div>
+    </main>
+
+    <footer class="pad">
+      <div class="keys">
+        <button class="key" data-digit="7" type="button">7</button>
+        <button class="key" data-digit="8" type="button">8</button>
+        <button class="key" data-digit="9" type="button">9</button>
+        <button class="key" data-digit="4" type="button">4</button>
+        <button class="key" data-digit="5" type="button">5</button>
+        <button class="key" data-digit="6" type="button">6</button>
+        <button class="key" data-digit="1" type="button">1</button>
+        <button class="key" data-digit="2" type="button">2</button>
+        <button class="key" data-digit="3" type="button">3</button>
+        <button id="key-back" class="key key-back" type="button" aria-label="Backspace">⌫</button>
+        <button class="key" data-digit="0" type="button">0</button>
+        <button id="key-skip" class="key key-skip" type="button">SKIP<small>−5s</small></button>
+      </div>
+      <button id="btn-submit" class="btn btn-primary btn-submit" type="button" disabled>SUBMIT</button>
+    </footer>
+  </section>
+
+  <!-- GAME OVER SCREEN -->
+  <section id="screen-over" class="screen screen-over" hidden>
+    <p class="over-label">TIME'S UP</p>
+    <div id="over-score" class="over-score">0</div>
+    <p id="over-record" class="over-record" hidden>★ NEW RECORD ★</p>
+    <p class="best-line">Personal best: <strong id="over-best">0</strong></p>
+    <div class="over-buttons">
+      <button id="btn-again" class="btn btn-primary btn-big" type="button">PLAY AGAIN</button>
+      <button id="btn-share" class="btn btn-secondary btn-big" type="button">SHARE</button>
+    </div>
+    <p class="credit">Pippo Poppi Games</p>
+  </section>
+
+  <div id="toast" class="toast" role="status"></div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
