@@ -39,7 +39,7 @@ background il cronometro si ferma e riparte da dove era.
 
 ## Classifica mondiale
 
-A fine partita compare la classifica mondiale (top 10). La prima volta scegli un soprannome
+Nel menu iniziale vedi la top 5 mondiale; a fine partita compare la classifica mondiale (top 10). La prima volta scegli un soprannome
 (max 12 caratteri, salvato sul dispositivo): da lì in poi ogni partita viene inviata in
 automatico e vedi la tua posizione. Il server tiene una riga per soprannome e la sostituisce
 solo con un punteggio migliore, quindi riusando lo stesso nome conservi il record. È il

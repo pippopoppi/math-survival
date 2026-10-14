@@ -584,6 +584,7 @@
         const j = await r.json();
         el.worldMe.textContent = j.rank ? (myName + ': #' + j.rank + ' in the world' + (j.improved ? '' : ' (best ' + j.best + ')')) : myName + ': not ranked yet';
         renderList(j.top || []);
+        renderStartList(j.top || []);
       } catch (e) {
         el.worldMe.textContent = 'Ranking offline, try again later';
       }
@@ -600,7 +601,31 @@
     el.nick.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.nickSave.click(); } });
     el.nickChange.addEventListener('click', () => { showNameForm(true); el.nick.focus(); });
 
+    function renderStartList(top) {
+      const box = $('start-world'), list = $('start-world-list');
+      if (!box || !list) return;
+      list.innerHTML = '';
+      const rows = (top || []).slice(0, 5);
+      if (!rows.length) { box.hidden = true; return; }
+      rows.forEach((r, i) => {
+        const li = document.createElement('li');
+        if (nick && r.name === cleanName(nick)) li.className = 'me';
+        li.appendChild(Object.assign(document.createElement('span'), { className: 'pos', textContent: (i + 1) + '.' }));
+        li.appendChild(Object.assign(document.createElement('span'), { className: 'nm', textContent: r.name }));
+        li.appendChild(Object.assign(document.createElement('span'), { className: 'sc', textContent: r.score }));
+        list.appendChild(li);
+      });
+      box.hidden = false;
+    }
+
     return {
+      async loadStart() {
+        if (!enabled()) return;
+        try {
+          const r = await fetch(RANKING_URL + '?top=5', { cache: 'no-store' });
+          if (r.ok) renderStartList((await r.json()).top || []);
+        } catch (e) { /* offline: keep hidden */ }
+      },
       onGameOver(score, time) {
         if (!enabled()) { el.world.hidden = true; return; }
         el.world.hidden = false;
@@ -667,6 +692,7 @@
   // ----- Boot -----
   renderStart();
   showScreen('start');
+  Ranking.loadStart();
   // The analytics tag comes after game.js in the HTML, so wait for the parser to finish.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadVisits);
   else loadVisits();
